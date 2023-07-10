@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: deploy-watsonxdata-prerelease
+  name: deploy-watsonxdata
   namespace: default
   annotations:
     argocd.argoproj.io/sync-wave: '20'
@@ -215,7 +215,7 @@ spec:
             --block_storage_class=${STG_CLASS_BLOCK}
             --file_storage_class=${STG_CLASS_FILE} --license_acceptance=true
       runAfter:
-        - create-resolvers
+        - add-global-pull-secret
       taskRef:
         kind: Task
         name: ibm-lakehouse-manage

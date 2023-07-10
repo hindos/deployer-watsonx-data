@@ -1,11 +1,11 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  generateName: deploy-watsonxdata-prerelease-
+  generateName: deploy-watsonxdata-
   namespace: default
 spec:
   pipelineRef:
-    name: deploy-watsonxdata-prerelease
+    name: deploy-watsonxdata
   podTemplate:
     securityContext:
       fsGroup: 65532
