@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: deploy-watsonxdata-prerelease-
+  namespace: default
+spec:
+  pipelineRef:
+    name: deploy-watsonxdata-prerelease
+  podTemplate:
+    securityContext:
+      fsGroup: 65532
+  serviceAccountName: pipeline
+  timeout: 6h0m0s
+  workspaces:
+    - name: shared
+      volumeClaimTemplate:
+        metadata:
+          creationTimestamp: null
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+          storageClassName: ocs-storagecluster-cephfs
+          volumeMode: Filesystem
+        status: {}

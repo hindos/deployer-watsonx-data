@@ -1,0 +1,30 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: deployer-watsonxdata-git-repo-access
+  namespace: openshift-gitops
+spec: 
+  data:
+  - secretKey: ghe_token
+    remoteRef: 
+      key: 72010886-208f-24e1-f8ec-0c2eda4e7580
+  refreshInterval: 1h0m0s
+  secretStoreRef: 
+    name: cluster
+    kind: ClusterSecretStore
+  target:
+    name: deployer-watsonxdata-git-repo-access
+    creationPolicy: Owner
+    template:
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: repository
+      engineVersion: v2
+      type: Opaque
+      data:
+        type: git
+        url: 'https://github.ibm.com/skol/deployer-watsonxdata-prerelease.git'
+        username: not-used
+        project: default
+        password: '{{ .ghe_token }}'

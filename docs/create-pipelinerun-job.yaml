@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: create-pipelinerun-
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/sync-wave: '20'
+spec:
+  template:
+    spec:
+      serviceAccountName: pipeline
+      containers:
+      - name: create-pipelinerun
+        image: quay.io/openshift/origin-cli:v3.11
+        command: ["/bin/bash"]
+        args:
+        - -c
+        - |-
+          cat <<EOF | oc create -f -
+          ---
+          apiVersion: tekton.dev/v1beta1
+          kind: PipelineRun
+          metadata:
+            generateName: deploy-watsonxdata-prerelease-
+            namespace: default
+          spec:
+            pipelineRef:
+              name: deploy-watsonxdata-prerelease
+            podTemplate:
+              securityContext:
+                fsGroup: 65532
+            serviceAccountName: pipeline
+            timeout: 6h0m0s
+            workspaces:
+              - name: shared
+                volumeClaimTemplate:
+                  metadata:
+                    creationTimestamp: null
+                  spec:
+                    accessModes:
+                      - ReadWriteOnce
+                    resources:
+                      requests:
+                        storage: 1Gi
+                    storageClassName: ocs-storagecluster-cephfs
+                    volumeMode: Filesystem
+                  status: {}
+          EOF
+      restartPolicy: OnFailure

@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: deployer-watsonxdata-prerelease
+  namespace: openshift-gitops
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  sources:
+    - repoURL: 'https://github.ibm.com/skol/deployer-watsonxdata-prerelease.git'
+      targetRevision: main
+      path: pipelines
+    - repoURL: 'https://github.ibm.com/skol/deployer-watsonxdata-prerelease.git'
+      targetRevision: main
+      path: tasks
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

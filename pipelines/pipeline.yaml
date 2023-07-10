@@ -1,0 +1,244 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: deploy-watsonxdata-prerelease
+  namespace: default
+  annotations:
+    argocd.argoproj.io/sync-wave: '20'
+spec:
+  params:
+    - default: a65ac528-bbca-1425-8d07-fde9e2f1ff70
+      name: IBM_ENTITLEMENT_KEY_ID
+      type: string
+    - default: >-
+        https://afa20521-cd75-4864-843f-e59fd0ffd49d.us-south.secrets-manager.appdomain.cloud
+      name: IBM_SECRETS_MANAGER_ENDPOINT
+      type: string
+    - default: ocs-storagecluster-ceph-rbd
+      name: STORAGE_CLASS_BLOCK
+      type: string
+    - default: ocs-storagecluster-cephfs
+      name: STORAGE_CLASS_FILE
+      type: string
+    - default: 'cpd_platform,watsonx_data'
+      name: COMPONENTS
+      type: string
+    - default: cpd-operator
+      description: Cloud Pak for Data operator namespace
+      name: PROJECT_CPD_OPS
+      type: string
+    - default: zen
+      description: Cloud Pak for Data operands namespace
+      name: PROJECT_CPD_INSTANCE
+      type: string
+  tasks:
+    - name: get-entitlement-key
+      params:
+        - name: KEY_ID
+          value: $(params.IBM_ENTITLEMENT_KEY_ID)
+        - name: SECRETS_MANAGER_ENDPOINT_URL
+          value: $(params.IBM_SECRETS_MANAGER_ENDPOINT)
+      taskRef:
+        kind: Task
+        name: ibmcloud-secrets-manager-get
+    - name: set-up-env
+      params:
+        - name: SCRIPT
+          value: >-
+            mkdir -p $(pwd)/ibm-lh-manage/.ibm-lh-manage-utils
+
+
+            export WORK_DIR=$(pwd)/ibm-lh-manage/.ibm-lh-manage-utils
+
+
+            cat > $(pwd)/ibm-lh-manage/.ibm-lh-manage-utils/ibm-lh-manage.env
+            <<EOF
+
+            export work_dir=$WORK_DIR
+
+            export WORK_DIR=$WORK_DIR
+
+            export WORK_ROOT=$WORK_DIR
+
+            export CASE_OFFLINE_DIR=$WORK_DIR/case/offline
+
+            export IBMPAK_BASE_DIR=$WORK_DIR/.ibm-pak/data
+
+            export OPENSHIFT_TYPE=self-managed
+
+            export IMAGE_ARCH=x86_64
+
+            export COMPONENTS=$(params.COMPONENTS)
+
+
+            export PROJECT_CPD_OPS=$(params.PROJECT_CPD_OPS)
+
+            export PROJECT_CPD_INSTANCE=$(params.PROJECT_CPD_INSTANCE)
+
+
+            export STG_CLASS_BLOCK=$(params.STORAGE_CLASS_BLOCK)
+
+            export STG_CLASS_FILE=$(params.STORAGE_CLASS_FILE)
+             
+            export
+            IBM_ENTITLEMENT_KEY=$(tasks.get-entitlement-key.results.secret-value)
+
+            export VERSION=4.7.0
+
+            EOF
+
+
+            cat $(pwd)/ibm-lh-manage/.ibm-lh-manage-utils/ibm-lh-manage.env 
+      runAfter:
+        - get-entitlement-key
+      taskRef:
+        kind: Task
+        name: ibm-lakehouse-manage
+      workspaces:
+        - name: manifest-dir
+          workspace: shared
+    - name: add-global-pull-secret
+      params:
+        - name: SCRIPT
+          value: >-
+            source $(pwd)/ibm-lh-manage/.ibm-lh-manage-utils/ibm-lh-manage.env
+
+
+            oc patch --type=merge --patch='{"spec":{"paused":true}}'
+            machineconfigpool/master
+
+
+            oc patch --type=merge --patch='{"spec":{"paused":true}}'
+            machineconfigpool/worker
+
+            /opt/ansible/bin/add-icr-cred-to-global-pull-secret --entitled_registry_key=${IBM_ENTITLEMENT_KEY}
+
+            oc patch --type=merge --patch='{"spec":{"paused":false}}'
+            machineconfigpool/master
+
+
+            oc patch --type=merge --patch='{"spec":{"paused":false}}'
+            machineconfigpool/worker
+
+
+            oc get mcp
+
+            echo "Wait for check mcp..."
+
+            sleep 30
+
+            #check mcp update status
+
+            echo "Wait for check master node ..."
+
+            oc get mcp --no-headers|grep master
+
+            mcp_master_node=$(oc get mcp --no-headers|grep master|awk '{print
+            $4}')
+
+            while [ "${mcp_master_node}" = "True" ]
+
+            do
+              oc get mcp --no-headers|grep master
+              sleep 10
+              mcp_master_node=$(oc get mcp --no-headers|grep master |awk '{print $4}')
+            done
+
+
+            echo "Wait for check worker node ..."
+
+            oc get mcp --no-headers|grep worker
+
+            mcp_worker_node=$(oc get mcp --no-headers|grep worker |awk '{print
+            $4}')
+
+            while [ "${mcp_worker_node}" = "True" ]
+
+            do
+              oc get mcp --no-headers|grep worker
+              sleep 10
+              mcp_worker_node=$(oc get mcp --no-headers|grep worker |awk '{print $4}')
+            done
+      runAfter:
+        - set-up-env
+      taskRef:
+        kind: Task
+        name: ibm-lakehouse-manage
+      workspaces:
+        - name: manifest-dir
+          workspace: shared
+    - name: install
+      params:
+        - name: SCRIPT
+          value: >
+            source $(pwd)/ibm-lh-manage/.ibm-lh-manage-utils/ibm-lh-manage.env
+
+
+            ansible-galaxy collection install community.general community.crypto
+            ansible.utils community.vmware kubernetes.core community.kubernetes
+
+
+            chmod 777 ${work_dir}
+
+
+            export release=$VERSION
+
+            export components=$(params.COMPONENTS)
+
+
+            /opt/ansible/bin/apply-cluster-components --release=${release}
+            --license_acceptance=true
+
+
+            /opt/ansible/bin/authorize-instance-topology
+            --cpd_operator_ns=${PROJECT_CPD_OPS}
+            --cpd_instance_ns=${PROJECT_CPD_INSTANCE}
+
+
+            /opt/ansible/bin/setup-instance-topology --release=${release}
+            --cpd_operator_ns=${PROJECT_CPD_OPS}
+            --cpd_instance_ns=${PROJECT_CPD_INSTANCE} --license_acceptance=true 
+
+
+            # `install --license_acceptance=true` has 2 steps: apply-olm and
+            apply-cr
+
+
+            /opt/ansible/bin/olm-apply --release=${release} --case_download=true
+            --components=${components} --cpd_operator_ns=${PROJECT_CPD_OPS} -vvv
+
+
+            /opt/ansible/bin/cr-apply --release=${release}
+            --components=$(params.COMPONENTS)
+            --cpd_operator_ns=${PROJECT_CPD_OPS}
+            --cpd_instance_ns=${PROJECT_CPD_INSTANCE}
+            --block_storage_class=${STG_CLASS_BLOCK}
+            --file_storage_class=${STG_CLASS_FILE} --license_acceptance=true
+      runAfter:
+        - create-resolvers
+      taskRef:
+        kind: Task
+        name: ibm-lakehouse-manage
+      timeout: 4h0m0s
+      workspaces:
+        - name: manifest-dir
+          workspace: shared
+    - name: get-cpd-instance-details
+      params:
+        - name: SCRIPT
+          value: >-
+            source $(pwd)/ibm-lh-manage/.ibm-lh-manage-utils/ibm-lh-manage.env
+
+            /opt/ansible/bin/get-cpd-instance-details
+            --cpd_instance_ns=${PROJECT_CPD_INSTANCE}
+            --get_admin_initial_credentials=true
+      runAfter:
+        - install
+      taskRef:
+        kind: Task
+        name: ibm-lakehouse-manage
+      workspaces:
+        - name: manifest-dir
+          workspace: shared
+  workspaces:
+    - name: shared
