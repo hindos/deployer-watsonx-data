@@ -9,10 +9,10 @@ spec:
     server: https://kubernetes.default.svc
     namespace: default
   sources:
-    - repoURL: 'https://github.com/cloud-native-toolkit/deployer-watsonxdata.git'
+    - repoURL: 'https://github.com/cloud-native-toolkit/deployer-watsonx-data.git'
       targetRevision: main
       path: pipelines
-    - repoURL: 'https://github.com/cloud-native-toolkit/deployer-watsonxdata.git'
+    - repoURL: 'https://github.com/cloud-native-toolkit/deployer-watsonx-data.git'
       targetRevision: main
       path: tasks
   syncPolicy:
