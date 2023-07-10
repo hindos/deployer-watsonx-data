@@ -13,10 +13,10 @@ spec:
   description: >-
     This task runs the ibm-lakehouse-manage-utils image to directly access the commands
   params:
-    - description: Latest build tag for ibm-lakehouse-manage-utils
+    - description: Latest GA build tag for ibm-lakehouse-manage-utils
       name: IMAGE_TAG
       type: string
-      default: latest
+      default: v1.0.0
     - description: Script to run
       name: SCRIPT
       type: string
