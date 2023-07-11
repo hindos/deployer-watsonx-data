@@ -31,6 +31,10 @@ spec:
       description: Cloud Pak for Data operands namespace
       name: PROJECT_CPD_INSTANCE
       type: string
+    - default: v1.0.0
+      description: IBM watsonx.data version
+      name: VERSION
+      type: string
   tasks:
     - name: get-entitlement-key
       params:
@@ -43,6 +47,8 @@ spec:
         name: ibmcloud-secrets-manager-get
     - name: set-up-env
       params:
+        - name: IMAGE_TAG
+          value: $(params.VERSION)
         - name: SCRIPT
           value: >-
             mkdir -p $(pwd)/ibm-lh-manage/.ibm-lh-manage-utils
@@ -99,6 +105,8 @@ spec:
           workspace: shared
     - name: add-global-pull-secret
       params:
+        - name: IMAGE_TAG
+          value: $(params.VERSION)
         - name: SCRIPT
           value: >-
             source $(pwd)/ibm-lh-manage/.ibm-lh-manage-utils/ibm-lh-manage.env
@@ -169,6 +177,8 @@ spec:
           workspace: shared
     - name: install
       params:
+        - name: IMAGE_TAG
+          value: $(params.VERSION)
         - name: SCRIPT
           value: >
             source $(pwd)/ibm-lh-manage/.ibm-lh-manage-utils/ibm-lh-manage.env
@@ -225,6 +235,8 @@ spec:
           workspace: shared
     - name: get-cpd-instance-details
       params:
+        - name: IMAGE_TAG
+          value: $(params.VERSION)
         - name: SCRIPT
           value: >-
             source $(pwd)/ibm-lh-manage/.ibm-lh-manage-utils/ibm-lh-manage.env
