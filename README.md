@@ -1,6 +1,6 @@
 # Techzone Deployer IBM watsonx.data pipeline
 
-This repository contains a Tekton pipeline to deploy IBM watsonx.data pre-release builds onto an IBM Technology Zone `deployer` cluster. This pipeline always pulls the latest build version for watsonx.data.
+This repository contains a Tekton pipeline to deploy IBM watsonx.data onto an IBM Technology Zone `deployer` cluster.
 
 ## Pre-requisites
 
@@ -17,11 +17,11 @@ For more information on the cluster configuration and deployment, see https://gi
 
 ### Deploying with ArgoCD
 
-These commands deploy an ArgoCD application, which sets up the tasks, access secrets required, pipeline and create a pipelinerun.
+These commands deploy an ArgoCD application, which sets up the tasks, pipeline and create a pipelinerun.
 
 ```shell
-git clone git@github.ibm.com:skol/deployer-watsonxdata-prerelease.git
-cd deployer-watsonxdata-prerelease
+git clone github.com/cloud-native-toolkit/deployer-watsonxdata.git
+cd deployer-watsonxdata
 oc apply -f .
 ```
 
@@ -29,29 +29,7 @@ Wait. This total deployment can take 1hr30min.
 
 ### Deploying manually
 
-By default, pipelines are run out of the `default` namespace. To pull from the pre-release build image registry, create the following secrets and service account modifications.
-
-#### Create access secrets
-
-To create the required secret access to Artifactory REST endpoint,
-
-
-```shell
-oc apply -f k8s/artifactory-access.yaml -n default
-```
-
-To create the required secret access to Artifactory Docker image registry,
-
-
-```shell
-oc apply -f k8s/registry-access-swg-artifactory.yaml -n default
-```
-
-To add the Artifactory Docker image registry secret to the `pipeline` service account in the `default` namespace,
-
-```shell
-oc apply -f k8s/registry-access-pipeline-sa.yaml -n default
-```
+By default, pipelines are run out of the `default` namespace.
 
 #### Create task and pipeline
 
