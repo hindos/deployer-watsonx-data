@@ -16,7 +16,7 @@ spec:
     - description: Latest GA build tag for ibm-lakehouse-manage-utils
       name: IMAGE_TAG
       type: string
-      default: v1.0.1
+      default: v1.0.0
     - description: Script to run
       name: SCRIPT
       type: string
