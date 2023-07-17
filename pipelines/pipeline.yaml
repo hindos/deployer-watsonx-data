@@ -31,7 +31,7 @@ spec:
       description: Cloud Pak for Data operands namespace
       name: PROJECT_CPD_INSTANCE
       type: string
-    - default: v1.0.1
+    - default: v1.0.0
       description: IBM watsonx.data version
       name: VERSION
       type: string
