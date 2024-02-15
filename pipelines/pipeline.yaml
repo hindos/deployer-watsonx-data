@@ -7,7 +7,7 @@ metadata:
     argocd.argoproj.io/sync-wave: '20'
 spec:
   params:
-    - default: a65ac528-bbca-1425-8d07-fde9e2f1ff70
+    - default: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJJQk0gTWFya2V0cGxhY2UiLCJpYXQiOjE3MDc4MzcyNzYsImp0aSI6ImJmMmYwMmM5NzJjMzQ3Njc4ZGMzZmM1MzcyMTBmMTZjIn0.qfaAncJ6fXqm_UnAh6p-u8eEbZmfBo7nmpYNnE81a8M
       name: IBM_ENTITLEMENT_KEY_ID
       type: string
     - default: >-
@@ -87,8 +87,7 @@ spec:
             export STG_CLASS_FILE=$(params.STORAGE_CLASS_FILE)
              
             export
-            IBM_ENTITLEMENT_KEY=$(tasks.get-entitlement-key.results.secret-value)
-
+            IBM_ENTITLEMENT_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJJQk0gTWFya2V0cGxhY2UiLCJpYXQiOjE3MDc4MzcyNzYsImp0aSI6ImJmMmYwMmM5NzJjMzQ3Njc4ZGMzZmM1MzcyMTBmMTZjIn0.qfaAncJ6fXqm_UnAh6p-u8eEbZmfBo7nmpYNnE81a8M
             export VERSION=4.7.0
 
             EOF
